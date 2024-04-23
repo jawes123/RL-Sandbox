@@ -1,5 +1,8 @@
 
 import random
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
 
 # Monte-Carlo Control:
 #   initialize value fn to 0
@@ -41,7 +44,7 @@ visited = []
 # game start
 def main():
     cum_reward = 0
-    # run 10000 episodes
+    # run n number of episodes
     for i in range(100000):
         # initial state = tuple(dealer, player)
         initial_state = (random.randint(1, 10), random.randint(1, 10))
@@ -61,9 +64,38 @@ def main():
 
         # track cumulative reward across eps; every 100 eps print out
         cum_reward += reward
-        if i % 1000 == 0:
-            print(action_val)
+        #if i % 1000 == 0:
+            #print(action_val)
             #print(f'The cumulative reward at episode {i}: {cum_reward}')
+    #print(action_val)
+
+    # plot using matplotlib
+    # set up the figure and axes
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # x is dealer, y is player
+    _x = np.arange(1,11)
+    _y = np.arange(1,22)
+    _xx, _yy = np.meshgrid(_x, _y)
+    x, y = _xx.ravel(), _yy.ravel()
+
+    # height of bars is equal to the value of the optimal action-val fn of each combination of cards
+    top = [max(action_val[(d,p),"HIT"],action_val[(d,p),"STAND"]) for d, p in zip(x, y)]
+    # bottom = np.full_like(top, 1)
+    bottom = np.zeros_like(top)
+    
+    width = depth = 1
+    ax.bar3d(x, y, bottom, width, depth, top, shade=True)
+
+    ax.set_xticks(_x)
+    ax.set_xlabel("Dealer's Hand")
+    ax.set_yticks([n for n in _y if n%2==0])
+    ax.set_ylabel("Player's Hand")
+
+    ax.set_zlim(-1, 1)
+
+    plt.show()
 
 
 # returns next action
