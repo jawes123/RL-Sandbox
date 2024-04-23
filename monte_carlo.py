@@ -2,7 +2,6 @@
 import random
 import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 
 # Monte-Carlo Control:
 #   initialize value fn to 0
@@ -45,7 +44,7 @@ visited = []
 def main():
     cum_reward = 0
     # run n number of episodes
-    for i in range(100000):
+    for i in range(500000):
         # initial state = tuple(dealer, player)
         initial_state = (random.randint(1, 10), random.randint(1, 10))
         # get action based on existing action-value fn
@@ -69,6 +68,7 @@ def main():
             #print(f'The cumulative reward at episode {i}: {cum_reward}')
     #print(action_val)
 
+
     # plot using matplotlib
     # set up the figure and axes
     fig = plt.figure(figsize=(8, 6))
@@ -82,9 +82,8 @@ def main():
 
     # height of bars is equal to the value of the optimal action-val fn of each combination of cards
     top = [max(action_val[(d,p),"HIT"],action_val[(d,p),"STAND"]) for d, p in zip(x, y)]
-    # bottom = np.full_like(top, 1)
     bottom = np.zeros_like(top)
-    
+    ax.set_zlim(-1, 1)
     width = depth = 1
     ax.bar3d(x, y, bottom, width, depth, top, shade=True)
 
@@ -92,8 +91,6 @@ def main():
     ax.set_xlabel("Dealer's Hand")
     ax.set_yticks([n for n in _y if n%2==0])
     ax.set_ylabel("Player's Hand")
-
-    ax.set_zlim(-1, 1)
 
     plt.show()
 
