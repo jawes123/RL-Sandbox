@@ -6,7 +6,7 @@ import numpy as np
 # Monte-Carlo Control:
 #   initialize value fn to 0
 #   use time-varying scalar step-size of αt = 1/N(st, at)
-#   e-greedy exploration strategy with et = N0/(N0 + N(st)), 
+#   ε-greedy exploration strategy with et = N0/(N0 + N(st)), 
 #       where N0 = 100 is constant (can adjust)
 #       N(s) is number of times state s has been visited
 #       N(s, a) is number of times that action a has been selected from state s
@@ -14,8 +14,8 @@ import numpy as np
 #   
 #   Plan:
 #       Prediction: Use Q(S,A) update formula to find new state-action value for each step in episode
-#       Control: Use e-greedy(Q) to find best Q fn out of set of Q's
-#           with prob e choose action at rand, with prob 1-e choose greedy
+#       Control: Use ε-greedy(Q) to find best Q fn out of set of Q's
+#           with prob ε choose action at rand, with prob 1-ε choose greedy
 
 
 ############## Constants ##############
@@ -43,6 +43,7 @@ visited = []
 # game start
 def main():
     cum_reward = 0
+    #win = 0
     # run n number of episodes
     for i in range(500000):
         # initial state = tuple(dealer, player)
@@ -51,6 +52,7 @@ def main():
         action = next_action(initial_state)
         # get reward for this episode. synonymous with return here due to no discounting
         reward = step(initial_state, action)
+        #if reward == 1: win = win + 1
 
         # after episode terminates, update action_val for each state-action in visited list accordingly
         for state_action in visited:
@@ -64,9 +66,9 @@ def main():
         # track cumulative reward across eps; every 100 eps print out
         cum_reward += reward
         #if i % 1000 == 0:
-            #print(action_val)
             #print(f'The cumulative reward at episode {i}: {cum_reward}')
     #print(action_val)
+    #print(win/500000)
 
 
     # plot using matplotlib

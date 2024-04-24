@@ -4,30 +4,32 @@ import random
 # TD Learning:
 #   initialize value fn to 0
 #   use time-varying scalar step-size of αt = 1/N(st, at)
-#   e-greedy exploration strategy with et = N0/(N0 + N(st)), 
+#   ε-greedy exploration strategy with εt = N0/(N0 + N(st)), 
 #       where N0 = 100 is constant (can adjust)
 #       N(s) is number of times state s has been visited
 #       N(s, a) is number of times that action a has been selected from state s
 #   
 #   Plan:
-#       For each episode:
-#           E(s,a) = 0
-#           Initialize S, A
-#           For each step of episode:
-#               Take action A, observe R, S'
-#               Choose A' from S' using policy derived frmo Q (e.g. e-greedy)
-#               TD-error = R + Q(S',A') - Q(S,A)
-#               E(S,A) = E(S,A) + 1
-#               For each visited s and a:
-#                   ???? confused. watch video (lecture 5)
-#       Control: Use e-greedy(Q) to find best Q fn out of set of Q's
-#           with prob e choose action at rand, with prob 1-e choose greedy
+#       Prediction:
+#           For each episode:
+#               E(s,a) = 0
+#               Initialize S, A
+#               For each step of episode:
+#                   Take action A, observe R, S'
+#                   Choose A' from S' using policy derived from Q (e.g. e-greedy)
+#                   TD-error = R + Q(S',A') - Q(S,A)
+#                   E(S,A) = E(S,A) + 1
+#                   For each visited s and a:
+#                       ???? confused. watch video (lecture 5)
+#       Control: Use ε-greedy(Q) to find best Q fn out of set of Q's
+#           with prob ε choose action at rand, with prob 1-ε choose greedy
 
 
 ############## Constants ##############
 N0 = 40
 HIT = "HIT"
 STAND = "STAND"
+LAMBDA = [n/10 for n in range(11)]
 #######################################
 
 
@@ -40,7 +42,10 @@ num_sa = {}
 # action_val = dict storing previous Q(s,a) calculated when taking a particular a at particular s
 #   {((int,int),str):int}
 action_val = {}
-# global list variable storing history of state-actions per episode
+# e_trace = dict storing previously calculated eligibility trace for each state-action
+#   {((int, int),str):int}
+e_trace = {}
+# list storing complete history of state-actions each episode
 visited = []
 #######################################
 
@@ -48,13 +53,20 @@ visited = []
 ################ Logic ################
 # game start
 def main():
+    # iterate thru each value of λ
+    for l in LAMBDA:
+        for i in range(1000):
+            while((x := step(next_s, next_a))[1] == -1):
+                
+        # call step
+        # every single time step return to update
     return
 
 
 def next_action(state):
     return
 
-
+# Returns: ((dealer, player),reward)
 def step(state, action):
 
     # state is a tuple
