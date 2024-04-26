@@ -22,13 +22,12 @@ def step(state, action):
             dealer_next = dealer_next*-1 if random.randint(1,3) == 1 else dealer_next
             dealer += dealer_next
 
-        # if dealer busts
-        if dealer < 1 or dealer > 21:
+        # if dealer busts or has higher sum than player
+        if dealer < 1 or dealer > 21 or dealer < player:
             reward = 1
-        
-        # if dealer doesn't bust, higher sum wins
-        if dealer < player: reward = 1
+        # if player has higher sum
         elif dealer > player: reward = -1
+        # if sums are same, draw
         else: reward = 0
     
     # if previous action was hit
