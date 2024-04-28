@@ -3,6 +3,7 @@ import random
 import game
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 
 # Monte-Carlo Control:
 #   initialize value fn to 0
@@ -65,12 +66,15 @@ def main():
         # clear visited list
         visited.clear()
 
-        # track cumulative reward across eps; every 100 eps print out
+        # track cumulative reward across eps; every 10000 eps print out
         cum_reward += reward
         if i % 10000 == 0:
             print(f'The cumulative reward at episode {i}: {cum_reward}')
+    #print(wins)
 
-    print(wins)
+    # save monte-carlo Q values to local as pkl for further analysis work in TD.py
+    with open("mc_action_val.pkl", "wb") as pkl_file:
+        pickle.dump(action_val, pkl_file)
 
     ############## PLOT ##############
     try:

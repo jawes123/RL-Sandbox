@@ -3,6 +3,7 @@ import random
 import game
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 
 # TD Learning:
 #   initialize value fn to 0
@@ -39,23 +40,26 @@ LAMBDA = [n/10 for n in range(11)]
 ################ Logic ################
 # game start
 def main():
+    # mse_list = mean squared error for each value of λ (aka l)
+    mse_list = []
+    # num of episodes per λ value
+    episode_count = 1000
     # iterate thru each value of λ
-    # num_s = dict storing # of times each state s has been visited; {(int,int):int}
-    num_s = {}
-    # num_sa = dict storing # of times action a has been taken at state s;
-    #   {((int,int),str):int}
-    num_sa = {}
-    # e_trace = dict storing previously calculated eligibility trace for each state-action
-    #   {((int, int),str):int}
-    e_trace = {}
-    # action_val = dict storing previous Q(s,a) calculated when taking a particular a at particular s
-    #   {((int,int),str):int}
-    action_val = {}
-
     for l in LAMBDA:
-        print(f"******* LAMBDA = {l} *******")
+        #print(f"\n*************** LAMBDA = {l} ***************")
+        # num_s = dict storing # of times each state s has been visited; {(int,int):int}
+        num_s = {}
+        # num_sa = dict storing # of times action a has been taken at state s;
+        #   {((int,int),str):int}
+        num_sa = {}
+        # e_trace = dict storing previously calculated eligibility trace for each state-action
+        #   {((int, int),str):int}
+        e_trace = {}
+        # action_val = dict storing previous Q(s,a) calculated when taking particular a at particular s
+        #   {((int,int),str):int}
+        action_val = {}
         cum_reward = 0
-        for i in range(1000):
+        for i in range(episode_count):
             # list storing complete history of state-actions and rewards for each episode
             visited = []
             # initial state = tuple(dealer, player)
@@ -73,10 +77,27 @@ def main():
             update_q(visited, reward, num_sa, e_trace, action_val, l)
 
             # track cumulative reward across eps; every 100 eps print out
-            cum_reward += reward
-            if i % 100 == 0:
-                print(f'The cumulative reward at episode {i}: {cum_reward}')
-    return
+            #cum_reward += reward
+            #if i % 100 == 5550:
+            #    print(f'The cumulative reward at episode {i}: {cum_reward}')
+            
+        # calculate mean squared error b/w estimated Q values of SARSA and true Q values of Monte-Carlo
+        with open("mc_action_val.pkl", "rb") as pkl_file:
+            mc_action_val = pickle.load(pkl_file)
+        squared_sum = 0
+        # get the total squared sum first
+        for key in action_val:
+            squared_sum = squared_sum + (action_val[key] - mc_action_val[key])**2
+        # then calculate the mean squared error
+        mse = squared_sum/episode_count
+        mse_list.append(mse)
+        
+    ############## PLOT ##############
+    fig = plt.figure(figsize=(8, 6))
+    plt.plot([x/10 for x in range(11)], mse_list)
+    print(mse_list)
+    plt.show()
+    ##################################
 
 # Updates all relevant data structures for current state-action and returns next action
 def next_action(state, num_s, num_sa, e_trace, action_val, visited):
