@@ -38,6 +38,7 @@ def main():
     #   {((int,int),str):int}
     action_val = {}
     cum_reward = 0
+    wins = 0
     # run n number of episodes
     for i in range(100000):
         # list storing complete history of state-actions and rewards for each episode
@@ -55,7 +56,7 @@ def main():
             
         # final reward obtained from the terminal state
         reward = step_return[1]
-
+        if reward == 1: wins = wins+1
         # after episode terminates, update action_val for each state-action in visited list accordingly
         for state_action in visited:
             # GLIE Monte-Carlo Control Policy Improvement
@@ -66,8 +67,10 @@ def main():
 
         # track cumulative reward across eps; every 100 eps print out
         cum_reward += reward
-        if i % 1000 == 0:
+        if i % 10000 == 0:
             print(f'The cumulative reward at episode {i}: {cum_reward}')
+
+    print(wins)
 
     ############## PLOT ##############
     try:

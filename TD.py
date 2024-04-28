@@ -1,5 +1,8 @@
-import random
 
+import random
+import game
+import matplotlib.pyplot as plt
+import numpy as np
 
 # TD Learning:
 #   initialize value fn to 0
@@ -26,7 +29,7 @@ import random
 
 
 ############## Constants ##############
-N0 = 100
+N0 = 10
 HIT = "HIT"
 STAND = "STAND"
 LAMBDA = [n/10 for n in range(11)]
@@ -50,86 +53,76 @@ def main():
     action_val = {}
 
     for l in LAMBDA:
+        print(f"******* LAMBDA = {l} *******")
+        cum_reward = 0
         for i in range(1000):
             # list storing complete history of state-actions and rewards for each episode
             visited = []
             # initial state = tuple(dealer, player)
-            next_s = (draw(), draw())
+            state = (game.draw(), game.draw())
             # get action based on existing action-value fn
-            next_a = next_action(next_s)
-            while((x := step(next_s, next_a))[1] == float('-inf')):
+            next_a = next_action(state, num_s, num_sa, e_trace, action_val, visited)
+            step_return = None
+            while((step_return := game.step(state, next_a))[1] == float('-inf')):
                 # update num_s, num_sa, e_trace, visited, action_val
-                visited.append(x)
-                state = x[0]
+                state = step_return[0]
+                next_a = next_action(state, num_s, num_sa, e_trace, action_val, visited)
+            
+            # calculate and update action-value
+            reward = step_return[1]
+            update_q(visited, reward, num_sa, e_trace, action_val, l)
 
-                # increment and update num_s for this state (meaning visited this state 1 more time)
-                num_s.setdefault(state, 0)
-                num_s[state] = num_s[state]+1
-                # initialize action_val to 0 for both hit and stand for this state if not existing
-                action_val.setdefault((state, HIT), 0)
-                action_val.setdefault((state, STAND), 0)
-                # e-greedy exploration with et = N0/(N0 + N(st))
-                epsilon = N0 / (N0 + num_s[state])
-
-
-        # call step
-        # every single time step return to update
+            # track cumulative reward across eps; every 100 eps print out
+            cum_reward += reward
+            if i % 100 == 0:
+                print(f'The cumulative reward at episode {i}: {cum_reward}')
     return
 
+# Updates all relevant data structures for current state-action and returns next action
+def next_action(state, num_s, num_sa, e_trace, action_val, visited):
+    # increment and update num_s for this state (meaning visited this state 1 more time)
+    num_s.setdefault(state, 0)
+    num_s[state] = num_s[state]+1
+    # 
+    # initialize action_val to 0 for both hit and stand for this state if not existing
+    action_val.setdefault((state, HIT), 0)
+    action_val.setdefault((state, STAND), 0)
 
-def next_action(state):
-    return
+    # calculate new et = N0/(N0 + N(st)) to pass to next_action
+    epsilon = N0 / (N0 + num_s[state])
 
-
-def draw():
-    return random.randint(1, 10)
-
-
-# Parameters: 
-#   state (dealer's first card 1-10 and the player's sum 1-21)
-#   action (hit or stand)
-# Returns: ((dealer, player),reward)
-#   sample of the next state s' (may be terminal if game finished)
-#   AND reward r
-def step(state, action):
-
-    # state is a tuple
-    dealer = state[0]
-    player = state[1]
-    reward = float('-inf')
-
-    # if previous action was stand
-    if action == "STAND":
-        while(dealer < 17 and dealer >= 1):
-            # calculating dealer's next card. must first pick random card 1-10
-            dealer_next = draw()
-            # then determine if it is red (1/3) or black (2/3)
-            dealer_next = dealer_next*-1 if random.randint(1,3) == 1 else dealer_next
-            dealer += dealer_next
-
-        # if dealer busts
-        if dealer < 1 or dealer > 21:
-            reward = 1
-        
-        # if dealer doesn't bust, higher sum wins
-        if dealer < player: reward = 1
-        elif dealer > player: reward = -1
-        else: reward = 0
+    # Control: Use e-greedy(Q) to find best Q fn out of set of Q's;
+    #   With prob epsilon choose action at rand, with prob 1-e choose greedy
+    if random.random() <= epsilon or action_val[(state, HIT)] == action_val[(state, STAND)]:
+        next_a = random.choice([HIT, STAND])
+    else:
+        next_a = HIT if action_val[(state, HIT)] > action_val[(state, STAND)] else STAND
     
-    # if previous action was hit
-    elif action == "HIT":
-        player_next = draw()
-        player_next = player_next*-1 if random.randint(1,3) == 1 else player_next
-        player += player_next
+    # update num_sa, e_trace, and visited (same concept as updating num_s) with newly obtained action
+    num_sa.setdefault((state, next_a), 0)
+    num_sa[(state, next_a)] = num_sa[(state, next_a)] + 1
+    e_trace.setdefault((state, next_a), 0)
+    e_trace[(state, next_a)] = e_trace[(state, next_a)] + 1
+    visited.append((state, next_a))
+    return next_a
 
-        # if player busts
-        if player < 1 or player > 21:
-            reward = -1
+# recursively update Q values of all previously visited state-actions in the episode
+def update_q(visited, reward, num_sa, e_trace, action_val, l):
+    if not visited:
+        # since terminal state, there is no Q value, so return the reward instead
+        return reward
+    
+    state_action = visited[0]
+    q_sa_prime = update_q(visited[1:], reward, num_sa, e_trace, action_val, l)
 
-    # return next state and reward
-    next_s = (dealer, player)
-    return (next_s, reward)
+    # calculate Q(s,a)
+    step_size = 1/num_sa[state_action]
+    td_error = (reward + q_sa_prime - action_val[state_action])
+    action_val[state_action] = action_val[state_action] + step_size*td_error*e_trace[state_action]
 
+    # update eligibility trace decayed by λ (aka l)
+    e_trace[state_action] = e_trace[state_action]*l
+    return action_val[state_action]
 #######################################
 
 if __name__ == '__main__':
